@@ -1,0 +1,70 @@
+---
+title: "Coursera Practical Machine Learning Project: Predicting biceps curl execution type"
+author: "K Pascual"
+date: "January 25, 2016"
+output: html_document
+---
+
+##Summary:
+
+This project uses the data from the [Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements](http://groupware.les.inf.puc-rio.br/work.jsf?p1=10335) project, which took different kinds of measurements from sensors placed in the participants' body and the dumbell used while the participants were performing the unilateral dumbbell biceps curl exercise in five different ways: one correct way (class A), and four incorrect ways (class B-E). In this project, a random forest machine learning algorithm was applied to this dataset of measurements in order to predict which kind of biceps curl the participants performed.
+
+##Initial data loading and preprocessing
+
+The dataset to be used was first downloaded. NA values used for the dataset are "NA" or an empty string:
+
+```{r}
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "pml-training.csv", method="curl")
+initTrain = read.csv("pml-training.csv", na.strings = c("NA", ""))
+initTrain$classe = as.factor(initTrain$classe)
+```
+
+Upon inspection of the dataset, the first seven columns can be dropped. There were also a lot of NA values, and so columns with more than 95% NA values were also dropped.
+
+```{r}
+library(caret)
+library(parallel)
+library(doParallel)
+
+initTrain = initTrain[, -c(1:7)]
+percentNA = colSums(is.na(initTrain))/nrow(initTrain)
+retained = percentNA[(percentNA[]<0.95) == TRUE]
+initTrain = initTrain[, names(retained)]
+
+set.seed(1023)
+trainPart <- createDataPartition(initTrain$classe, p = .75, list=FALSE)
+
+train = initTrain[trainPart,]
+test = initTrain[-trainPart,]
+
+dim(train); dim(test)
+```
+
+##Prediction using random forest
+Run random forest machine learning on parallel processing using the training dataset:
+```{r}
+fitControl = trainControl(method = "cv", number = 10, allowParallel = TRUE)
+x = train[,-53]
+y = train[,53] # outcome variable "classe"
+
+cluster = makeCluster(detectCores() - 1)
+registerDoParallel(cluster)
+fit = train(x, y, method="rf", data=train, trControl = fitControl)
+
+stopCluster(cluster)
+
+fit$finalModel
+```
+
+Use model fit to predict the classe variable on the test set:
+```{r}
+predictions = predict(fit, test)
+confusionMatrix(predictions, test$classe)
+```
+
+```{r}
+accuracy = sum(predictions == test$classe)/length(predictions)
+oose = 1- accuracy
+```
+
+Using the random forest algorithm, the accuracy is `{r} accuracy` and the out of sample error is `{r} oose`.
