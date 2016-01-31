@@ -14,14 +14,15 @@ This project uses the data from the [Wearable Computing: Accelerometers' Data Cl
 The dataset to be used was first downloaded. NA values used for the dataset are "NA" or an empty string:
 
 ```{r}
-download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "pml-training.csv", method="curl")
+setInternet2(use = TRUE)
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "pml-training.csv")
 initTrain = read.csv("pml-training.csv", na.strings = c("NA", ""))
 initTrain$classe = as.factor(initTrain$classe)
 ```
 
 Upon inspection of the dataset, the first seven columns can be dropped. There were also a lot of NA values, and so columns with more than 95% NA values were also dropped.
 
-```{r}
+```{r message=F, warning=F}
 library(caret)
 library(parallel)
 library(doParallel)
@@ -67,4 +68,4 @@ accuracy = sum(predictions == test$classe)/length(predictions)
 oose = 1- accuracy
 ```
 
-Using the random forest algorithm, the accuracy is `{r} accuracy` and the out of sample error is `{r} oose`.
+Using the random forest algorithm, the accuracy is `r accuracy` and the out of sample error is `r oose`.
