@@ -22,7 +22,7 @@ initTrain$classe = as.factor(initTrain$classe)
 
 Upon inspection of the dataset, the first seven columns can be dropped. There were also a lot of NA values, and so columns with more than 95% NA values were also dropped.
 
-```{r message=F, warning=F}
+```{r message=FALSE, warning=FALSE}
 library(caret)
 library(parallel)
 library(doParallel)
